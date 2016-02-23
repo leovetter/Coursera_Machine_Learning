@@ -71,11 +71,32 @@ for idx = 1:m
 endfor
 
 X = [ones(m, 1) X];
-h = sigmoid([ones(m, 1) sigmoid(Theta1*X')']*Theta2');
-J = (1/m) * sum(sum(- y_vec .* log(h) - (1-y_vec) .* log(1-h))) + (lambda / (2*m)) * (sum(sum(Theta1(:,2:end).^2)) + sum(sum(Theta2(:,2:end).^2)));
 
-Theta1_grad = (1/m) * 
+J = (1/m) * sum(sum(- y_vec .* log(sigmoid([ones(m, 1) sigmoid(Theta1*X')']*Theta2')) - (1-y_vec) .* log(1-sigmoid([ones(m, 1) sigmoid(Theta1*X')']*Theta2')))) + (lambda / (2*m)) * (sum(sum(Theta1(:,2:end).^2)) + sum(sum(Theta2(:,2:end).^2)));
 
+delta1 = zeros(size(Theta1));
+delta2 = zeros(size(Theta2));
+for t = 1:m
+  a1 = X(t,:);
+  target =  y_vec(t,:);
+
+  z2 = Theta1*a1';
+  a2 = [1 sigmoid(z2)'];
+  z3 = a2*Theta2';
+  a3 = sigmoid(z3);
+
+  errors3 = a3 - target;
+  errors2 = Theta2' * errors3' .* sigmoidGradient([1 ; z2]);
+
+  delta1 = delta1 + errors2(2:end) * a1;
+  delta2 = delta2 + errors3' * a2;
+endfor
+
+Theta1_grad = (1/m) * delta1;
+Theta2_grad = (1/m) * delta2;
+
+Theta1_grad(:,2:end) = Theta1_grad(:,2:end) + (lambda/m) * Theta1(:,2:end);
+Theta2_grad(:,2:end) = Theta2_grad(:,2:end) + (lambda/m) * Theta2(:,2:end);
 % -------------------------------------------------------------
 
 % =========================================================================
